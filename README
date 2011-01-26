@@ -14,6 +14,7 @@ Needs to be done
 
 - Scrape (need special querystring parser for multiple info_hash)
 - Realtime accounting of seeders, leechers, downloads for scrape
+- Comments
 
 Contributing
 ------------
