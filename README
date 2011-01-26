@@ -1,0 +1,26 @@
+Node-bittorrent-tracker
+=======================
+
+This is high performance bittorrent tracker written on node.js
+It's functional but some features are missing (see Needs to be done section)
+
+Dependencies
+------------
+
+This application require Node-mysql-libmysqlclient and redis.js (can't remember author for now)
+
+Needs to be done
+----------------
+
+- Scrape (need special querystring parser for multiple info_hash)
+- Realtime accounting of seeders, leechers, downloads for scrape
+
+Contributing
+------------
+
+Please contact me via messages to help with further developement
+
+License
+-------
+
+MIT license.
