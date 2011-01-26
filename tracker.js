@@ -4,13 +4,16 @@ var mysql = require('./mysql-libmysqlclient'),
   result,
   row,
   rows;
+// CONFIG
 var
-  host = "localhost",
-  user = "",
-  password = "",
-  database = "";
+  mysql_host = "localhost",
+  mysql_user = "",
+  mysql_password = "",
+  mysql_database = "";
+//
+
 conn = mysql.createConnectionSync();
-conn.connectSync(host, user, password, database);
+conn.connectSync(mysql_host, mysql_user, mysql_password, mysql_database);
 if (!conn.connectedSync()) {
   sys.puts("Connection error " + conn.connectionErrno + ": " + conn.connectionError);
   process.exit(1);

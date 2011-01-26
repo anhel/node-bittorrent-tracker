@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS `torrents` (
  `leechers` int(11) NOT NULL DEFAULT '0',
  `seeders` int(11) NOT NULL DEFAULT '0',
  `completed` int(11) NOT NULL DEFAULT '0',
- `downloads` int(11) NOT NULL DEFAULT '0'
+ `downloads` int(11) NOT NULL DEFAULT '0',
  PRIMARY KEY (`tid`),
  KEY `info_hash` (`info_hash`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
