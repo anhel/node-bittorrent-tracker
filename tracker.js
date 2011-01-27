@@ -1,6 +1,5 @@
 var sys = require('sys'),http = require('http'),url = require('url'),qs = require('querystring'),client = require("./redis").createClient();
-var mysql = require('./mysql-libmysqlclient'),
-  conn,
+var conn,
   result,
   row,
   rows;
@@ -10,10 +9,13 @@ var
   mysql_user = "",
   mysql_password = "",
   mysql_database = "";
+var
+  tr_interval = 180; // Announce interval in seconds
 //
-
-conn = mysql.createConnectionSync();
-conn.connectSync(mysql_host, mysql_user, mysql_password, mysql_database);
+var conn = require('./mysql-libmysqlclient').createConnectionSync();
+conn.initSync();
+conn.setOptionSync(conn.MYSQL_OPT_RECONNECT, 1);
+conn.realConnectSync(mysql_host, mysql_user, mysql_password, mysql_database);
 if (!conn.connectedSync()) {
   sys.puts("Connection error " + conn.connectionErrno + ": " + conn.connectionError);
   process.exit(1);
@@ -176,19 +178,16 @@ var sendPeers = function(req, torrent, callback) {
     			if(bufs.length) {
 					req.response.writeHead(200, {"Content-Type": "text/plain"});
 					//req.response.write('d8:intervali10e8:intervali10e5:peers'+buf.length+':')
-					console.log('TOTAL:'+req.info_hash+' i:'+i+' bufs:'+bufs.length)
-					req.response.write('d8:intervali180e5:peers'+i * 6+':')
+					req.response.write('d8:intervali'+tr_interval+'e5:peers'+i * 6+':')
 					for(var ki in bufs) {
-						console.log('t:'+req.info_hash +' '+bufs[ki].inspect())
 						req.response.write(bufs[ki]);
-
 					}
 					req.response.write('e');
 					req.response.end();
 					return;
 				} else {
 					req.response.writeHead(200, {"Content-Type": "text/plain"});
-    				req.response.write(encode({ interval: 180, complete: i, incomplete: i, peers: []}));
+    				req.response.write(encode({ interval: tr_interval, complete: i, incomplete: i, peers: []}));
     				req.response.end();
 				}
 			} else {
@@ -208,7 +207,7 @@ var sendPeers = function(req, torrent, callback) {
     		}
     		console.log('sending '+sys.inspect(wantedPeers));
     		req.response.writeHead(200, {"Content-Type": "text/plain"});
-    		req.response.write(encode({ interval: 900, complete: 1, incomplete: 22, peers: wantedPeers}));
+    		req.response.write(encode({ interval: tr_interval, complete: 1, incomplete: 22, peers: wantedPeers}));
     		req.response.end();
     		}
 		}
