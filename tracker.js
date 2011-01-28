@@ -5,17 +5,22 @@ var conn,
   rows;
 // CONFIG
 var
-  mysql_host = "localhost",
-  mysql_user = "",
-  mysql_password = "",
-  mysql_database = "";
-var
-  tr_interval = 180; // Announce interval in seconds
+  // Mysql config
+  conf.mysql.host = "localhost",
+  conf.mysql.user = "",
+  conf.mysql.password = "",
+  conf.mysql.database = "",
+  // Tracker config
+  conf.tracker.port = '/tmp/bt.sock', // Port or path to socket
+  conf.tracker.user = 'nobody', // User for socket
+  conf.tracker.group = 'nobody', // Group for socket
+  conf.tracker.interval = 180; // Announce interval in seconds
 //
 var conn = require('./mysql-libmysqlclient').createConnectionSync();
 conn.initSync();
+// Need to fix reconnect
 conn.setOptionSync(conn.MYSQL_OPT_RECONNECT, 1);
-conn.realConnectSync(mysql_host, mysql_user, mysql_password, mysql_database);
+conn.realConnectSync(conf.mysql.host, conf.mysql.user, conf.mysql.password, conf.mysql.database);
 if (!conn.connectedSync()) {
   sys.puts("Connection error " + conn.connectionErrno + ": " + conn.connectionError);
   process.exit(1);
@@ -40,9 +45,10 @@ var server = http.createServer(function (request, response) {
 	if(parts[2] == 'announce') announce(response, params, parts[1], request.headers.realip);
 	else if(parts[2] == 'scrape') scrape(response, params, parts[1]);
 	else handle404(response);
-}).listen('/tmp/bt.sock', function() {
-require('child_process').exec('chown nobody:nobody /tmp/bt.sock',
-  function (error, stdout, stderr) {})
+}).listen(conf.tracker.port, function() {
+	// if its a socket then we need to change owner for frontend access
+	if(!IsNumeric(conf.tracker.port) && conf.tracker.user && conf.tracker.group)
+		require('child_process').exec('chown '+conf.tracker.user+':'+conf.tracker.group+' '+conf.tracker.port);
 });
 // On error
 process.on('uncaughtException', function(err) {
@@ -178,7 +184,7 @@ var sendPeers = function(req, torrent, callback) {
     			if(bufs.length) {
 					req.response.writeHead(200, {"Content-Type": "text/plain"});
 					//req.response.write('d8:intervali10e8:intervali10e5:peers'+buf.length+':')
-					req.response.write('d8:intervali'+tr_interval+'e5:peers'+i * 6+':')
+					req.response.write('d8:intervali'+conf.tracker.interval+'e5:peers'+i * 6+':')
 					for(var ki in bufs) {
 						req.response.write(bufs[ki]);
 					}
@@ -187,28 +193,28 @@ var sendPeers = function(req, torrent, callback) {
 					return;
 				} else {
 					req.response.writeHead(200, {"Content-Type": "text/plain"});
-    				req.response.write(encode({ interval: tr_interval, complete: i, incomplete: i, peers: []}));
+    				req.response.write(encode({ interval: conf.tracker.interval, complete: i, incomplete: i, peers: []}));
     				req.response.end();
 				}
 			} else {
 				console.log('not compact')
-			var wantedPeers = [];
-			for (var k in replies) {
-				console.log(replies[k].toString());
-    			if(wantedPeers.length >= req.numwant) break;
-    			var parts = replies[k].toString().split(':');
-    			console.log('parts '+sys.inspect(parts));
-    			if(parts[0] == req.peer_id) continue;
-    			if(req.no_peer_id)
-    				wantedPeers.push({ ip: parts[1], port: parts[2] });
-    			else
-    				wantedPeers.push({ id: parts[0], ip: parts[1], port: parts[2] });
-    			console.log('pushed ');
-    		}
-    		console.log('sending '+sys.inspect(wantedPeers));
-    		req.response.writeHead(200, {"Content-Type": "text/plain"});
-    		req.response.write(encode({ interval: tr_interval, complete: 1, incomplete: 22, peers: wantedPeers}));
-    		req.response.end();
+				var wantedPeers = [];
+				for (var k in replies) {
+					console.log(replies[k].toString());
+    				if(wantedPeers.length >= req.numwant) break;
+    				var parts = replies[k].toString().split(':');
+    				console.log('parts '+sys.inspect(parts));
+    				if(parts[0] == req.peer_id) continue;
+    				if(req.no_peer_id)
+    					wantedPeers.push({ ip: parts[1], port: parts[2] });
+    				else
+    					wantedPeers.push({ id: parts[0], ip: parts[1], port: parts[2] });
+    				console.log('pushed ');
+    			}
+    			console.log('sending '+sys.inspect(wantedPeers));
+    			req.response.writeHead(200, {"Content-Type": "text/plain"});
+    			req.response.write(encode({ interval: conf.tracker.interval, complete: 1, incomplete: 22, peers: wantedPeers}));
+    			req.response.end();
     		}
 		}
 	});
