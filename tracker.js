@@ -64,20 +64,20 @@ var announce = function(response, params, uid, ip) {
 	//
 	 var info_hash = bufferHex(qs.unescapeBuffer(params.info_hash));
 	var peer_id = bufferHex(qs.unescapeBuffer(params.peer_id));
-	if(params.numwant) var numwant = parseInt(params.numwant) || 50; else var numwant = 50;
-	if(params.compact) var compact = parseInt(params.compact) || 0; else var compact = 0;
-	if(params.no_peer_id) var no_peer_id = parseInt(params.no_peer_id) || 0; else var no_peer_id = 0;
-	if(params.downloaded) var downloaded = parseInt(params.downloaded); else var downloaded = 0;
-	if(params.uploaded) var uploaded = parseInt(params.uploaded); else var uploaded = 0;
-	if(params.left) var left = parseInt(params.left); else var left = 0;
+	if(params.numwant) var numwant = parseInt(params.numwant, 10) || 50; else var numwant = 50;
+	if(params.compact) var compact = parseInt(params.compact, 10) || 0; else var compact = 0;
+	if(params.no_peer_id) var no_peer_id = parseInt(params.no_peer_id, 10) || 0; else var no_peer_id = 0;
+	if(params.downloaded) var downloaded = parseInt(params.downloaded, 10); else var downloaded = 0;
+	if(params.uploaded) var uploaded = parseInt(params.uploaded, 10); else var uploaded = 0;
+	if(params.left) var left = parseInt(params.left, 10); else var left = 0;
 	if(params.event) {
 		if(params.event == "started") var event = params.event;
 		else if(params.event == "completed") var event = params.event;
 		else if(params.event == "stopped") var event = params.event;
 		else var event = 0;
 	} else var event = 0;
-	var port = parseInt(params.port);
-	uid = parseInt(uid);
+	var port = parseInt(params.port, 10);
+	uid = parseInt(uid, 10);
 	// checks
 	if(info_hash.length != 40 || downloaded < 0 || (event == 'completed' && left) || left < -1 || peer_id.length < 20 || peer_id.length > 50  || port <= 0 || uploaded < 0) {
 		console.log(info_hash)
@@ -144,9 +144,9 @@ var checkPier = function(req, torrent, callback) {
 	console.log('Check Peer')
 	client.hget('p:'+req.peer_id, 's'+req.info_hash, function(err,replies) {
 		if(replies && req.event != 'started') {
-			client.hmset(['p:'+req.peer_id, 'u', req.uid, 'ip', req.ip, 'p', parseInt(req.port), 'l'+req.info_hash, +new Date]);
+			client.hmset(['p:'+req.peer_id, 'u', req.uid, 'ip', req.ip, 'p', parseInt(req.port, 10), 'l'+req.info_hash, +new Date]);
 		} else {
-			client.hmset(['p:'+req.peer_id, 'u', req.uid, 'ip', req.ip, 'p', parseInt(req.port), 'l'+req.info_hash, +new Date, 's'+req.info_hash, +new Date]);
+			client.hmset(['p:'+req.peer_id, 'u', req.uid, 'ip', req.ip, 'p', parseInt(req.port, 10), 'l'+req.info_hash, +new Date, 's'+req.info_hash, +new Date]);
 			client.sadd('tp:'+req.info_hash, req.peer_id+':'+req.ip+':'+req.port);
 		}
 		callback(req, torrent)
@@ -168,13 +168,13 @@ var sendPeers = function(req, torrent, callback) {
     				var octets = parts[1].split('.');
 
     				bufs[i] =  new Buffer(6);
-    				bufs[i][0] = parseInt(octets[0]);
-					bufs[i][1] = parseInt(octets[1]);
-					bufs[i][2] = parseInt(octets[2]);
-					bufs[i][3] = parseInt(octets[3]);
+    				bufs[i][0] = parseInt(octets[0], 10);
+					bufs[i][1] = parseInt(octets[1], 10);
+					bufs[i][2] = parseInt(octets[2], 10);
+					bufs[i][3] = parseInt(octets[3], 10);
 					var n = 4;
 					for (var g = 8; g >= 0; g -= 8) {
-                    	bufs[i][n++] = (parseInt(parts[2]) >> g) & 0xff;
+                    	bufs[i][n++] = (parseInt(parts[2]) >> g, 10) & 0xff;
                 	}
                 	//bufs[i]=ipBuf;
     				console.log('sending '+parts[1]+':'+parts[2])
