@@ -223,15 +223,23 @@ var sendPeers = function(req, torrent, callback) {
 		}
 	});
 }
-
+// Scrape functions - http://wiki.theory.org/BitTorrentSpecification#Tracker_.27scrape.27_Convention
 var scrape = function(response, params, uid) {
-	error(response, "Not supported yet");return false;
 	console.log('scrape');
-	if(params.info_hash == undefined) {error(response, "Invalid request");return false;}
-	console.log('11111')
-	var info_hash = bufferHex(qs.unescapeBuffer(params.info_hash[0]));
-	uid = parseInt(uid);
-	if(info_hash.length != 40) {error(response, "Invalid request");return false;}
+	if(!params.info_hash || !params.info_hash.length) {error(response, "Invalid request");return false;}
+	var info_hashes = Array();
+	if (params.info_hash instanceof Array) {
+		for (var k in params.info_hash) {
+			info_hashes[k] = bufferHex(qs.unescapeBuffer(params.info_hash[k]));
+			if(info_hashes[k].length != 40) {error(response, "Invalid request");return false;}
+		}
+	} else {
+		info_hashes[0] = bufferHex(qs.unescapeBuffer(params.info_hash));
+		if(info_hashes[0].length != 40) {error(response, "Invalid request");return false;}
+	}
+	uid = parseInt(uid, 10);
+	console.log(info_hashes)
+	// Needs competing
 	if(!loadTorrent(info_hash)) {error(response, "No such torrent");return false;}
 	if(!uid || !loadUser(uid)) {error(response, "No such user");return false;}
 	info = torInfo(info_hash);
@@ -250,17 +258,18 @@ var addCompleted = function(info_hash, peer_id, ip, port) {
 	client.hset("p:"+peer_id, 't', 0);
 	result = conn.querySync("UPDATE torrents SET completed=completed+1 WHERE info_hash = '"+info_hash+"'");
 }
-
+// Send failure message to client
 var error = function(response, msg) {
 	response.writeHead(200, {"Content-Type": "text/plain"});
     response.write("d14:failure reason"+msg.length+":"+msg+"e");
     response.end();
 }
+// Redirect to url
 var handle404 = function(response) {
   response.writeHead(302, { 'Content-Type': 'text/plain', 'Location': conf.tracker.redirect_url });
   response.end();
 };
-
+// Copyright ???
 var encode = function(input) {
   var tokens = [];
   if (typeof input == "number") {
@@ -296,6 +305,7 @@ var encode = function(input) {
   }
   return tokens.join('');
 };
+
 function bufferHex (b) {
 var s = '';
 for (var i = 0; i < b.length; i++) {
@@ -304,6 +314,7 @@ for (var i = 0; i < b.length; i++) {
  }
  return s;
 }
+// Copyright ???
 parse = function (qs, sep, eq) {
   sep = sep || "&";
   eq = eq || "=";
@@ -329,6 +340,7 @@ parse = function (qs, sep, eq) {
 
   return obj;
 };
+
 process.on('exit', function () {
   conn.closeSync();
 });
