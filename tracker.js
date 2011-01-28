@@ -4,17 +4,21 @@ var conn,
   row,
   rows;
 // CONFIG
-var
-  // Mysql config
-  conf.mysql.host = "localhost",
-  conf.mysql.user = "",
-  conf.mysql.password = "",
-  conf.mysql.database = "",
-  // Tracker config
-  conf.tracker.port = '/tmp/bt.sock', // Port or path to socket
-  conf.tracker.user = 'nobody', // User for socket
-  conf.tracker.group = 'nobody', // Group for socket
-  conf.tracker.interval = 180; // Announce interval in seconds
+var conf = new Object();
+conf.mysql = new Object();
+conf.tracker = new Object();
+// Mysql config
+conf.mysql.host = "localhost";
+conf.mysql.user = "";
+conf.mysql.password = "";
+conf.mysql.database = "";
+// Tracker config
+conf.tracker.port = '/tmp/bt.sock'; // Port or path to socket
+conf.tracker.user = 'nobody'; // User for socket
+conf.tracker.group = 'nobody'; // Group for socket
+conf.tracker.interval = 180; // Announce interval in seconds
+conf.tracker.error_log = '/root/log.txt'; // Error log path
+conf.tracker.redirect_url = 'http://yoursite.com'; // Redirect on wrong request
 //
 var conn = require('./mysql-libmysqlclient').createConnectionSync();
 conn.initSync();
@@ -47,12 +51,12 @@ var server = http.createServer(function (request, response) {
 	else handle404(response);
 }).listen(conf.tracker.port, function() {
 	// if its a socket then we need to change owner for frontend access
-	if(!IsNumeric(conf.tracker.port) && conf.tracker.user && conf.tracker.group)
+	if(isNaN(conf.tracker.port) && conf.tracker.user && conf.tracker.group)
 		require('child_process').exec('chown '+conf.tracker.user+':'+conf.tracker.group+' '+conf.tracker.port);
 });
 // On error
 process.on('uncaughtException', function(err) {
-	var log = require('fs').createWriteStream('/root/log.txt', {'flags': 'a'});
+	var log = require('fs').createWriteStream(conf.tracker.error_log, {'flags': 'a'});
 	log.write(err);
 	console.log(err);
 });
@@ -253,7 +257,7 @@ var error = function(response, msg) {
     response.end();
 }
 var handle404 = function(response) {
-  response.writeHead(302, { 'Content-Type': 'text/plain', 'Location': 'http://www.com' });
+  response.writeHead(302, { 'Content-Type': 'text/plain', 'Location': conf.tracker.redirect_url });
   response.end();
 };
 
