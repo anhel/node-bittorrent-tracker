@@ -65,16 +65,17 @@ var announce = function(response, params, uid, ip) {
 	console.log('announce');
 	if(params.info_hash == undefined) {error(response, "Invalid request");return false;}
 	if(params.port == undefined || params.peer_id == undefined) {error(response, "Invalid request");return false;}
-	//
-	 var info_hash = bufferHex(qs.unescapeBuffer(params.info_hash));
+	// Unescape and decode binary inputs
+	var info_hash = bufferHex(qs.unescapeBuffer(params.info_hash));
 	var peer_id = bufferHex(qs.unescapeBuffer(params.peer_id));
-	if(params.numwant) var numwant = parseInt(params.numwant, 10) || 50; else var numwant = 50;
-	if(params.compact) var compact = parseInt(params.compact, 10) || 0; else var compact = 0;
-	if(params.no_peer_id) var no_peer_id = parseInt(params.no_peer_id, 10) || 0; else var no_peer_id = 0;
-	if(params.downloaded) var downloaded = parseInt(params.downloaded, 10); else var downloaded = 0;
-	if(params.uploaded) var uploaded = parseInt(params.uploaded, 10); else var uploaded = 0;
-	if(params.left) var left = parseInt(params.left, 10); else var left = 0;
-	if(params.event) {
+	// Parsing variables from client
+	var numwant = parseInt(params.numwant, 10) || 50,
+    compact = parseInt(params.compact, 10) || 0,
+    no_peer_id = parseInt(params.no_peer_id, 10) || 0,
+    downloaded = parseInt(params.downloaded, 10) || 0,
+    uploaded = parseInt(params.uploaded, 10) || 0,
+    left = parseInt(params.left, 10) || 0;
+    if(params.event) {
 		if(params.event == "started") var event = params.event;
 		else if(params.event == "completed") var event = params.event;
 		else if(params.event == "stopped") var event = params.event;
@@ -228,6 +229,7 @@ var scrape = function(response, params, uid) {
 	console.log('scrape');
 	if(!params.info_hash || !params.info_hash.length) {error(response, "Invalid request");return false;}
 	var info_hashes = Array();
+	// Client can request more than 1 info_hashes
 	if (params.info_hash instanceof Array) {
 		for (var k in params.info_hash) {
 			info_hashes[k] = bufferHex(qs.unescapeBuffer(params.info_hash[k]));
